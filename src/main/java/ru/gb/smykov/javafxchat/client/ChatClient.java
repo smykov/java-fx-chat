@@ -16,11 +16,12 @@ public class ChatClient {
     }
 
     public void openConnection() throws IOException {
-        socket = new Socket("localhost", 8189);
+        socket = new Socket("127.0.0.1", 8189);
         in = new DataInputStream(socket.getInputStream());
         out = new DataOutputStream(socket.getOutputStream());
         new Thread(() -> {
             try {
+                waitAuth();
                 readMessages();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -28,6 +29,20 @@ public class ChatClient {
                 closeConnection();
             }
         }).start();
+    }
+
+    private void waitAuth() throws IOException {
+        while (true) {
+            final String message = in.readUTF();
+            if (message.startsWith("/authok")) {
+                String[] split = message.split("\\p{Blank}+");
+                String nick = split[1];
+                controller.setAuth(true);
+                controller.addMessage("Успешная авторизация под ником " + nick);
+                break;
+            }
+            controller.addMessage(message);
+        }
     }
 
     private void readMessages() throws IOException {
@@ -70,6 +85,5 @@ public class ChatClient {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        controller.addMessage(message);
     }
 }

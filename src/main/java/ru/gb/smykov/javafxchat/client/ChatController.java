@@ -1,7 +1,10 @@
 package ru.gb.smykov.javafxchat.client;
 
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -10,23 +13,31 @@ import java.util.Optional;
 
 public class ChatController {
     @FXML
+    private HBox authBox;
+    @FXML
+    private TextField loginField;
+    @FXML
+    private PasswordField passField;
+    @FXML
+    private VBox messageBox;
+    @FXML
     private TextArea messageArea;
     @FXML
     private TextField messageField;
     private final ChatClient client;
-    private final SimpleDateFormat formatForDateNow = new SimpleDateFormat("dd.MM.yyyy hh:mm:ss");
 
     public void clickExit() {
         System.exit(0);
     }
 
-    public ChatController(ChatClient client) {
+    public ChatController() {
         this.client = new ChatClient(this);
         while (true) {
             try {
                 client.openConnection();
                 break;
             } catch (IOException e) {
+                e.printStackTrace();
                 showNotification();
             }
         }
@@ -42,7 +53,7 @@ public class ChatController {
         alert.setTitle("Ошибка подключения");
         Optional<ButtonType> answer = alert.showAndWait();
         Boolean isExit = answer.map(select -> select.getButtonData().isCancelButton()).orElse(false);
-        if (isExit){
+        if (isExit) {
             System.exit(0);
         }
 
@@ -54,18 +65,21 @@ public class ChatController {
             return;
         }
 
-        messageField.clear();
-
         client.sendMessage(message);
         messageField.clear();
         messageField.requestFocus();
     }
 
     public void addMessage(String message) {
-        messageArea.appendText(getDate() + ": " + message + "\n");
+        messageArea.appendText(message + "\n");
     }
 
-    private String getDate() {
-        return formatForDateNow.format(new Date());
+    public void setAuth(boolean success) {
+        authBox.setVisible(!success);
+        messageBox.setVisible(success);
+    }
+
+    public void signinBtnClick() {
+        client.sendMessage("/auth " + loginField.getText() + " " + passField.getText());
     }
 }
