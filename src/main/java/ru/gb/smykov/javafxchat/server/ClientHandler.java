@@ -103,6 +103,12 @@ public class ClientHandler {
                 if ("/end".equals(message)) {
                     break;
                 }
+                if (message.startsWith("/w")) {
+                    String[] split = message.split("\\p{Blank}+");
+                    final String receiverNick  = split[1];
+                    server.privateMessage(receiverNick, nick, message);
+                    continue;
+                }
                 server.broadcast(nick + ": " + message);
             }
         } catch (IOException e) {
