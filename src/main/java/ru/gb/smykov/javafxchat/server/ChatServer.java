@@ -10,12 +10,12 @@ public class ChatServer {
     private final List<ClientHandler> clients;
 
     public ChatServer() {
-        this.clients = new ArrayList<ClientHandler>();
+        this.clients = new ArrayList<>();
     }
 
     public void run() {
         try (ServerSocket serverSocket = new ServerSocket(8189);
-             AuthService authService = new inMemoryAuthService();
+             AuthService authService = new inMemoryAuthService()
         ) {
             while (true) {
                 System.out.println("Ожидаю подключения...");
@@ -51,4 +51,12 @@ public class ChatServer {
         clients.remove(client);
     }
 
+    public void privateMessage(String receiverNick, String senderNick, String message) {
+        for (ClientHandler client : clients) {
+            if (receiverNick.equals(client.getNick())) {
+                client.sendMessage(message.replace("/w " + receiverNick, "private " + senderNick + ": "));
+                break;
+            }
+        }
+    }
 }
