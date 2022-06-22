@@ -1,9 +1,14 @@
 package ru.gb.smykov.javafxchat.client;
 
+import javafx.application.Platform;
+import ru.gb.smykov.javafxchat.Command;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+
+import static ru.gb.smykov.javafxchat.Command.*;
 
 public class ChatClient {
     private final ChatController controller;
@@ -34,23 +39,38 @@ public class ChatClient {
     private void waitAuth() throws IOException {
         while (true) {
             final String message = in.readUTF();
-            if (message.startsWith("/authok")) {
-                String[] split = message.split("\\p{Blank}+");
-                String nick = split[1];
-                controller.setAuth(true);
-                controller.addMessage("Успешная авторизация под ником " + nick);
-                break;
+            if (isCommand(message)) {
+                final Command command = getCommand(message);
+                final String[] params = command.parse(message);
+                if (command == AUTHOK) {
+                    final String nick = params[0];
+                    controller.setAuth(true);
+                    controller.addMessage("Успешная авторизация под ником " + nick);
+                    break;
+                }
+                if (command == ERROR) {
+                    Platform.runLater(() -> controller.showError(params[0]));
+                    continue;
+                }
             }
-            controller.addMessage(message);
         }
     }
 
     private void readMessages() throws IOException {
         while (true) {
             String message = in.readUTF();
-            if ("/end".equals(message)) {
-                break;
+            if (Command.isCommand(message)) {
+                final Command command = getCommand(message);
+                if (command == END) {
+                    break;
+                }
+                if (command == ERROR) {
+                    final String errorMessage = command.parse(message)[0];
+                    Platform.runLater(() -> controller.showError(errorMessage));
+                    continue;
+                }
             }
+
             controller.addMessage(message);
         }
     }
@@ -85,5 +105,9 @@ public class ChatClient {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void sendMessage(Command command, String... params) {
+        sendMessage(command.collectMessage(params));
     }
 }

@@ -5,6 +5,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import ru.gb.smykov.javafxchat.Command;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -80,6 +81,13 @@ public class ChatController {
     }
 
     public void signinBtnClick() {
-        client.sendMessage("/auth " + loginField.getText() + " " + passField.getText());
+        client.sendMessage(Command.AUTH, loginField.getText(), passField.getText());
+    }
+
+    public void showError(String errorMessage) {
+        final Alert alert = new Alert(Alert.AlertType.ERROR, errorMessage,
+                new ButtonType("OK", ButtonBar.ButtonData.OK_DONE));
+        alert.setTitle("Error!");
+        alert.showAndWait();
     }
 }
