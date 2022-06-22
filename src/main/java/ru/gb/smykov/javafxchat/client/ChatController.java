@@ -12,6 +12,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Optional;
 
+import static ru.gb.smykov.javafxchat.Command.MESSAGE;
+
 public class ChatController {
     @FXML
     private HBox authBox;
@@ -66,7 +68,7 @@ public class ChatController {
             return;
         }
 
-        client.sendMessage(message);
+        client.sendMessage(MESSAGE, message);
         messageField.clear();
         messageField.requestFocus();
     }

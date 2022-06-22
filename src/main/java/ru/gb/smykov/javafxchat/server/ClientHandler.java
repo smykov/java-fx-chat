@@ -7,6 +7,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
+import static ru.gb.smykov.javafxchat.Command.*;
+
 public class ClientHandler {
     private final ChatServer server;
     private final Socket socket;
@@ -39,26 +41,24 @@ public class ClientHandler {
         while (true) {
             try {
                 final String message = in.readUTF();
-                if (Command.isCommand(message)) {
-                    final Command command = Command.getCommand(message);
-                    if (command == Command.AUTH) {
-                        final String[] params = command.parse(message);
-                        String login = params[0];
-                        String password = params[1];
-                        final String nick = authService.getNickByLoginAndPassword(login, password);
+                final Command command = Command.getCommand(message);
+                if (command == Command.AUTH) {
+                    final String[] params = command.parse(message);
+                    String login = params[0];
+                    String password = params[1];
+                    final String nick = authService.getNickByLoginAndPassword(login, password);
 
-                        if (nick != null) {
-                            if (server.isNickBusy(nick)) {
-                                sendMessage(Command.ERROR, "Пользователь уже авторизован!");
-                            }
-                            sendMessage(Command.AUTHOK, nick);
-                            this.nick = nick;
-                            server.subscribe(this);
-                            server.broadcast("Пользователь " + nick + " зашел в чат");
-                            break;
-                        } else {
-                            sendMessage(Command.ERROR, "Неверные логин и пароль!");
+                    if (nick != null) {
+                        if (server.isNickBusy(nick)) {
+                            sendMessage(Command.ERROR, "Пользователь уже авторизован!");
                         }
+                        sendMessage(Command.AUTHOK, nick);
+                        this.nick = nick;
+                        server.subscribe(this);
+                        server.broadcast("Пользователь " + nick + " зашел в чат");
+                        break;
+                    } else {
+                        sendMessage(Command.ERROR, "Неверные логин и пароль!");
                     }
                 }
             } catch (IOException e) {
@@ -68,7 +68,7 @@ public class ClientHandler {
     }
 
     private void closeConnection() {
-        sendMessage(Command.END);
+        sendMessage(END);
         if (in != null) {
             try {
                 in.close();
@@ -93,7 +93,7 @@ public class ClientHandler {
         }
     }
 
-    public void sendMessage(String message) {
+    private void sendMessage(String message) {
         try {
             out.writeUTF(message);
         } catch (IOException e) {
@@ -101,7 +101,7 @@ public class ClientHandler {
         }
     }
 
-    private void sendMessage(Command command, String... params) {
+    public void sendMessage(Command command, String... params) {
         sendMessage(command.collectMessage(params));
     }
 
@@ -110,16 +110,24 @@ public class ClientHandler {
         try {
             while (true) {
                 String message = in.readUTF();
-                if (Command.isCommand(message) && Command.getCommand(message) == Command.END) {
-                    break;
-                }
-                if (message.startsWith("/w")) {
-                    String[] split = message.split("\\p{Blank}+");
-                    final String receiverNick = split[1];
-                    server.privateMessage(receiverNick, nick, message);
+                final Command command = Command.getCommand(message);
+                final String[] params = command.parse(message);
+                final String commandMessage = params[0];
+                if (!Command.isCommand(commandMessage)){
+                    server.broadcast(nick + ": " + commandMessage);
                     continue;
                 }
-                server.broadcast(nick + ": " + message);
+                final Command userCommand = getCommand(commandMessage);
+                final String[] userParams = userCommand.parse(commandMessage);
+                if (userCommand == END) {
+                    break;
+                }
+                if (userCommand == PRIVATE_MESSAGE) {
+                    final String receiverNick = userParams[0];
+                    final String receiverMessage = userParams[1];
+                    server.privateMessage(receiverNick, nick, receiverMessage);
+                    continue;
+                }
             }
         } catch (
                 IOException e) {

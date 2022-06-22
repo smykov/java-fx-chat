@@ -1,10 +1,14 @@
 package ru.gb.smykov.javafxchat.server;
 
+import ru.gb.smykov.javafxchat.Command;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+
+import static ru.gb.smykov.javafxchat.Command.MESSAGE;
 
 public class ChatServer {
     private final List<ClientHandler> clients;
@@ -30,7 +34,7 @@ public class ChatServer {
 
     public void broadcast(String message) {
         for (ClientHandler client : clients) {
-            client.sendMessage(message);
+            client.sendMessage(MESSAGE, message);
         }
     }
 
@@ -51,10 +55,10 @@ public class ChatServer {
         clients.remove(client);
     }
 
-    public void privateMessage(String receiverNick, String senderNick, String message) {
+    public void privateMessage(String receiverNick, String nick, String message) {
         for (ClientHandler client : clients) {
             if (receiverNick.equals(client.getNick())) {
-                client.sendMessage(message.replace("/w " + receiverNick, "private " + senderNick + ": "));
+                client.sendMessage(MESSAGE, "private " + nick + ": " + message);
                 break;
             }
         }

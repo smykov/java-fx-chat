@@ -39,19 +39,17 @@ public class ChatClient {
     private void waitAuth() throws IOException {
         while (true) {
             final String message = in.readUTF();
-            if (isCommand(message)) {
-                final Command command = getCommand(message);
-                final String[] params = command.parse(message);
-                if (command == AUTHOK) {
-                    final String nick = params[0];
-                    controller.setAuth(true);
-                    controller.addMessage("Успешная авторизация под ником " + nick);
-                    break;
-                }
-                if (command == ERROR) {
-                    Platform.runLater(() -> controller.showError(params[0]));
-                    continue;
-                }
+            final Command command = getCommand(message);
+            final String[] params = command.parse(message);
+            if (command == AUTHOK) {
+                final String nick = params[0];
+                controller.setAuth(true);
+                controller.addMessage("Успешная авторизация под ником " + nick);
+                break;
+            }
+            if (command == ERROR) {
+                Platform.runLater(() -> controller.showError(params[0]));
+                continue;
             }
         }
     }
@@ -59,19 +57,18 @@ public class ChatClient {
     private void readMessages() throws IOException {
         while (true) {
             String message = in.readUTF();
-            if (Command.isCommand(message)) {
-                final Command command = getCommand(message);
-                if (command == END) {
-                    break;
-                }
-                if (command == ERROR) {
-                    final String errorMessage = command.parse(message)[0];
-                    Platform.runLater(() -> controller.showError(errorMessage));
-                    continue;
-                }
+            final Command command = getCommand(message);
+            final String commandMessage = command.parse(message)[0];
+            if (command == END) {
+                break;
             }
-
-            controller.addMessage(message);
+            if (command == ERROR) {
+                Platform.runLater(() -> controller.showError(commandMessage));
+                continue;
+            }
+            if (command == MESSAGE) {
+                controller.addMessage(commandMessage);
+            }
         }
     }
 
@@ -99,7 +96,7 @@ public class ChatClient {
         }
     }
 
-    public void sendMessage(String message) {
+    private void sendMessage(String message) {
         try {
             out.writeUTF(message);
         } catch (IOException e) {
