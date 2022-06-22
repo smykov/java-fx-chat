@@ -5,12 +5,9 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import ru.gb.smykov.javafxchat.Command;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Optional;
 
 import static ru.gb.smykov.javafxchat.Command.MESSAGE;
@@ -69,18 +66,18 @@ public class ChatController {
 
     public void clickSendButton() {
         String message = messageField.getText();
-        Command commandMessage = MESSAGE;
 
         if (message.isBlank()) {
             return;
         }
 
         if (nickToPrivateMessage != null) {
-            commandMessage = PRIVATE_MESSAGE;
+            client.sendMessage(PRIVATE_MESSAGE, nickToPrivateMessage, message);
             nickToPrivateMessage = null;
+        } else {
+            client.sendMessage(MESSAGE, message);
         }
 
-        client.sendMessage(commandMessage, message);
         messageField.clear();
         messageField.requestFocus();
     }
@@ -106,11 +103,16 @@ public class ChatController {
     }
 
     public void selectClient(MouseEvent mouseEvent) {
-        if (mouseEvent.getClickCount() == 2) {
+        if (mouseEvent.getClickCount() >= 1) {
             final String selectedNick = clientList.getSelectionModel().getSelectedItem();
             if (selectedNick != null && !selectedNick.isEmpty()) {
                 this.nickToPrivateMessage = selectedNick;
             }
         }
+    }
+
+    public void updateClientsList(String[] clients) {
+        clientList.getItems().clear();
+        clientList.getItems().addAll(clients);
     }
 }

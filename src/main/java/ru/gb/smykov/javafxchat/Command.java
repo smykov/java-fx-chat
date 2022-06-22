@@ -38,7 +38,7 @@ public enum Command {
         public String[] parse(String commandText) {
             final String[] split = commandText.split(TOKEN_DELIMITER);
             final String[] nicks = new String[split.length - 1];
-            System.arraycopy(split, 1, nicks, 0, split.length);
+            System.arraycopy(split, 1, nicks, 0, split.length - 1);
             return nicks;
         }
     },

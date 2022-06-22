@@ -67,7 +67,7 @@ public class ChatServer {
             from.sendMessage(ERROR, "Пользователь '" + nickTo + "' не авторизован!");
             return;
         }
-        clientTo.sendMessage(MESSAGE, "private from" + clientTo.getNick() + ": " + message);
-        from.sendMessage(MESSAGE, "private to" + clientTo.getNick() + ": " + message);
+        clientTo.sendMessage(MESSAGE, "private from " + clientTo.getNick() + ": " + message);
+        from.sendMessage(MESSAGE, "private to " + clientTo.getNick() + ": " + message);
     }
 }

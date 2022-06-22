@@ -110,21 +110,25 @@ public class ClientHandler {
         try {
             while (true) {
                 String message = in.readUTF();
-                final Command command = Command.getCommand(message);
-                final String[] params = command.parse(message);
-                final String commandMessage = params[0];
-                if (!Command.isCommand(commandMessage)) {
-                    server.broadcast(MESSAGE, nick + ": " + commandMessage);
+                Command command = Command.getCommand(message);
+                String[] params = command.parse(message);
+
+                if (Command.isCommand(params[0])){
+                    message = params[0];
+                    command = getCommand(message);
+                    params = command.parse(message);
+                }
+                if (command == MESSAGE) {
+                    String clientMessage = params[0];
+                    server.broadcast(MESSAGE, nick + ": " + clientMessage);
                     continue;
                 }
-                final Command userCommand = getCommand(commandMessage);
-                final String[] userParams = userCommand.parse(commandMessage);
-                if (userCommand == END) {
+                if (command == END) {
                     break;
                 }
-                if (userCommand == PRIVATE_MESSAGE) {
-                    final String receiverNick = userParams[0];
-                    final String receiverMessage = userParams[1];
+                if (command == PRIVATE_MESSAGE) {
+                    final String receiverNick = params[0];
+                    final String receiverMessage = params[1];
                     server.sendPrivateMessage(this, receiverNick, receiverMessage);
                     continue;
                 }

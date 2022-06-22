@@ -58,16 +58,20 @@ public class ChatClient {
         while (true) {
             String message = in.readUTF();
             final Command command = getCommand(message);
-            final String commandMessage = command.parse(message)[0];
             if (command == END) {
                 break;
             }
+            final String[] params = command.parse(message);
+            final String commandMessage = params[0];
             if (command == ERROR) {
                 Platform.runLater(() -> controller.showError(commandMessage));
                 continue;
             }
             if (command == MESSAGE) {
                 controller.addMessage(commandMessage);
+            }
+            if (command == CLIENTS) {
+                controller.updateClientsList(params);
             }
         }
     }
