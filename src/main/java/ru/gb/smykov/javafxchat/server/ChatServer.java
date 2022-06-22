@@ -1,10 +1,13 @@
 package ru.gb.smykov.javafxchat.server;
 
+import ru.gb.smykov.javafxchat.Command;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static ru.gb.smykov.javafxchat.Command.*;
 
@@ -30,22 +33,32 @@ public class ChatServer {
         }
     }
 
-    public void broadcast(String message) {
-        for (ClientHandler client : clients.values()) {
-            client.sendMessage(MESSAGE, message);
+    public void broadcast(Command command, String message) {
+        for (ClientHandler client : this.clients.values()) {
+            client.sendMessage(command, message);
         }
     }
 
     public void subscribe(ClientHandler client) {
         clients.put(client.getNick(), client);
-    }
-
-    public boolean isNickBusy(String nick) {
-        return clients.get(nick) != null;
+        broadcastClientList();
     }
 
     public void unsubscribe(ClientHandler client) {
         clients.remove(client.getNick());
+        broadcastClientList();
+    }
+
+    private void broadcastClientList() {
+        String nicks = clients.values().stream()
+                .map(ClientHandler::getNick)
+                .collect(Collectors.joining(" "));
+        broadcast(CLIENTS, nicks);
+    }
+
+
+    public boolean isNickBusy(String nick) {
+        return clients.get(nick) != null;
     }
 
     public void sendPrivateMessage(ClientHandler from, String nickTo, String message) {

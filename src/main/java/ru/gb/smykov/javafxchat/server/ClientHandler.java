@@ -50,15 +50,15 @@ public class ClientHandler {
 
                     if (nick != null) {
                         if (server.isNickBusy(nick)) {
-                            sendMessage(Command.ERROR, "Пользователь уже авторизован!");
+                            sendMessage(ERROR, "Пользователь уже авторизован!");
                         }
-                        sendMessage(Command.AUTHOK, nick);
+                        sendMessage(AUTHOK, nick);
                         this.nick = nick;
                         server.subscribe(this);
-                        server.broadcast("Пользователь " + nick + " зашел в чат");
+                        server.broadcast(MESSAGE, "Пользователь " + nick + " зашел в чат");
                         break;
                     } else {
-                        sendMessage(Command.ERROR, "Неверные логин и пароль!");
+                        sendMessage(ERROR, "Неверные логин и пароль!");
                     }
                 }
             } catch (IOException e) {
@@ -114,7 +114,7 @@ public class ClientHandler {
                 final String[] params = command.parse(message);
                 final String commandMessage = params[0];
                 if (!Command.isCommand(commandMessage)) {
-                    server.broadcast(nick + ": " + commandMessage);
+                    server.broadcast(MESSAGE, nick + ": " + commandMessage);
                     continue;
                 }
                 final Command userCommand = getCommand(commandMessage);
