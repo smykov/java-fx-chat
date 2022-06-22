@@ -3,28 +3,32 @@ package ru.gb.smykov.javafxchat.client;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import ru.gb.smykov.javafxchat.Command;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Optional;
+
+import static ru.gb.smykov.javafxchat.Command.*;
 
 public class ChatController {
     @FXML
     private HBox authBox;
     @FXML
+    private ListView<String> clientList;
+    @FXML
     private TextField loginField;
     @FXML
     private PasswordField passField;
     @FXML
-    private VBox messageBox;
+    private HBox messageBox;
     @FXML
     private TextArea messageArea;
     @FXML
     private TextField messageField;
     private final ChatClient client;
+    private String nickToPrivateMessage;
 
     public void clickExit() {
         System.exit(0);
@@ -61,11 +65,18 @@ public class ChatController {
 
     public void clickSendButton() {
         String message = messageField.getText();
+
         if (message.isBlank()) {
             return;
         }
 
-        client.sendMessage(message);
+        if (nickToPrivateMessage != null) {
+            client.sendMessage(PRIVATE_MESSAGE, nickToPrivateMessage, message);
+            nickToPrivateMessage = null;
+        } else {
+            client.sendMessage(MESSAGE, message);
+        }
+
         messageField.clear();
         messageField.requestFocus();
     }
@@ -80,6 +91,31 @@ public class ChatController {
     }
 
     public void signinBtnClick() {
-        client.sendMessage("/auth " + loginField.getText() + " " + passField.getText());
+        client.sendMessage(Command.AUTH, loginField.getText(), passField.getText());
+    }
+
+    public void showError(String errorMessage) {
+        final Alert alert = new Alert(Alert.AlertType.ERROR, errorMessage,
+                new ButtonType("OK", ButtonBar.ButtonData.OK_DONE));
+        alert.setTitle("Error!");
+        alert.showAndWait();
+    }
+
+    public void selectClient(MouseEvent mouseEvent) {
+        if (mouseEvent.getClickCount() >= 1) {
+            final String selectedNick = clientList.getSelectionModel().getSelectedItem();
+            if (selectedNick != null && !selectedNick.isEmpty()) {
+                this.nickToPrivateMessage = selectedNick;
+            }
+        }
+    }
+
+    public void updateClientsList(String[] clients) {
+        clientList.getItems().clear();
+        clientList.getItems().addAll(clients);
+    }
+
+    public void signOutClick() {
+        client.sendMessage(END);
     }
 }

@@ -1,9 +1,14 @@
 package ru.gb.smykov.javafxchat.client;
 
+import javafx.application.Platform;
+import ru.gb.smykov.javafxchat.Command;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+
+import static ru.gb.smykov.javafxchat.Command.*;
 
 public class ChatClient {
     private final ChatController controller;
@@ -34,24 +39,40 @@ public class ChatClient {
     private void waitAuth() throws IOException {
         while (true) {
             final String message = in.readUTF();
-            if (message.startsWith("/authok")) {
-                String[] split = message.split("\\p{Blank}+");
-                String nick = split[1];
+            final Command command = getCommand(message);
+            final String[] params = command.parse(message);
+            if (command == AUTHOK) {
+                final String nick = params[0];
                 controller.setAuth(true);
                 controller.addMessage("Успешная авторизация под ником " + nick);
                 break;
             }
-            controller.addMessage(message);
+            if (command == ERROR) {
+                Platform.runLater(() -> controller.showError(params[0]));
+                continue;
+            }
         }
     }
 
     private void readMessages() throws IOException {
         while (true) {
             String message = in.readUTF();
-            if ("/end".equals(message)) {
+            final Command command = getCommand(message);
+            if (command == END) {
                 break;
             }
-            controller.addMessage(message);
+            final String[] params = command.parse(message);
+            final String commandMessage = params[0];
+            if (command == ERROR) {
+                Platform.runLater(() -> controller.showError(commandMessage));
+                continue;
+            }
+            if (command == MESSAGE) {
+                controller.addMessage(commandMessage);
+            }
+            if (command == CLIENTS) {
+                controller.updateClientsList(params);
+            }
         }
     }
 
@@ -79,11 +100,15 @@ public class ChatClient {
         }
     }
 
-    public void sendMessage(String message) {
+    private void sendMessage(String message) {
         try {
             out.writeUTF(message);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void sendMessage(Command command, String... params) {
+        sendMessage(command.collectMessage(params));
     }
 }

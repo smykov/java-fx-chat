@@ -11,6 +11,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.ListView?>
 <VBox alignment="CENTER" spacing="10.0" xmlns:fx="http://javafx.com/fxml"
       fx:controller="ru.gb.smykov.javafxchat.client.ChatController">
     <padding>
@@ -28,12 +29,16 @@
             <PasswordField fx:id="passField" promptText="password"/>
             <Button text="Sign in" onAction="#signinBtnClick"/>
         </HBox>
-        <VBox fx:id="messageBox" visible="false">
-            <TextArea fx:id="messageArea" editable="false" VBox.vgrow="ALWAYS"/>
-            <HBox spacing="10">
-                <TextField fx:id="messageField" HBox.hgrow="ALWAYS"/>
-                <Button text="Send" defaultButton="true" onAction="#clickSendButton"/>
-            </HBox>
-        </VBox>
+        <HBox fx:id="messageBox" visible="false">
+            <VBox>
+                <TextArea fx:id="messageArea" editable="false" VBox.vgrow="ALWAYS"/>
+                <HBox spacing="10">
+                    <TextField fx:id="messageField" HBox.hgrow="ALWAYS"/>
+                    <Button text="Send" defaultButton="true" onAction="#clickSendButton"/>
+                </HBox>
+            </VBox>
+            <Button text="sign out" onMouseClicked="#signOutClick"/>
+            <ListView fx:id="clientList" minWidth="200" maxWidth="200" onMouseClicked="#selectClient"/>
+        </HBox>
     </VBox>
 </VBox>

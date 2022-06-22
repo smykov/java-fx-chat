@@ -1,16 +1,21 @@
 package ru.gb.smykov.javafxchat.server;
 
+import ru.gb.smykov.javafxchat.Command;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static ru.gb.smykov.javafxchat.Command.*;
 
 public class ChatServer {
-    private final List<ClientHandler> clients;
+    private final Map<String, ClientHandler> clients;
 
     public ChatServer() {
-        this.clients = new ArrayList<>();
+        this.clients = new HashMap<>();
     }
 
     public void run() {
@@ -28,35 +33,41 @@ public class ChatServer {
         }
     }
 
-    public void broadcast(String message) {
-        for (ClientHandler client : clients) {
-            client.sendMessage(message);
+    public void broadcast(Command command, String message) {
+        for (ClientHandler client : this.clients.values()) {
+            client.sendMessage(command, message);
         }
     }
 
     public void subscribe(ClientHandler client) {
-        clients.add(client);
-    }
-
-    public boolean isNickBusy(String nick) {
-        for (ClientHandler client : clients) {
-            if (nick.equals(client.getNick())) {
-                return true;
-            }
-        }
-        return false;
+        clients.put(client.getNick(), client);
+        broadcastClientList();
     }
 
     public void unsubscribe(ClientHandler client) {
-        clients.remove(client);
+        clients.remove(client.getNick());
+        broadcastClientList();
     }
 
-    public void privateMessage(String receiverNick, String senderNick, String message) {
-        for (ClientHandler client : clients) {
-            if (receiverNick.equals(client.getNick())) {
-                client.sendMessage(message.replace("/w " + receiverNick, "private " + senderNick + ": "));
-                break;
-            }
+    private void broadcastClientList() {
+        String nicks = clients.values().stream()
+                .map(ClientHandler::getNick)
+                .collect(Collectors.joining(" "));
+        broadcast(CLIENTS, nicks);
+    }
+
+
+    public boolean isNickBusy(String nick) {
+        return clients.get(nick) != null;
+    }
+
+    public void sendPrivateMessage(ClientHandler from, String nickTo, String message) {
+        final ClientHandler clientTo = clients.get(nickTo);
+        if (clientTo == null) {
+            from.sendMessage(ERROR, "Пользователь '" + nickTo + "' не авторизован!");
+            return;
         }
+        clientTo.sendMessage(MESSAGE, "private from " + clientTo.getNick() + ": " + message);
+        from.sendMessage(MESSAGE, "private to " + clientTo.getNick() + ": " + message);
     }
 }

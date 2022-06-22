@@ -1,9 +1,13 @@
 package ru.gb.smykov.javafxchat.server;
 
+import ru.gb.smykov.javafxchat.Command;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+
+import static ru.gb.smykov.javafxchat.Command.*;
 
 public class ClientHandler {
     private final ChatServer server;
@@ -37,22 +41,24 @@ public class ClientHandler {
         while (true) {
             try {
                 final String message = in.readUTF();
-                if (message.startsWith("/auth")) {
-                    String[] split = message.split("\\p{Blank}+");
-                    final String login = split[1];
-                    final String password = split[2];
+                final Command command = Command.getCommand(message);
+                if (command == Command.AUTH) {
+                    final String[] params = command.parse(message);
+                    String login = params[0];
+                    String password = params[1];
                     final String nick = authService.getNickByLoginAndPassword(login, password);
+
                     if (nick != null) {
                         if (server.isNickBusy(nick)) {
-                            sendMessage("Пользователь уже авторизован!");
+                            sendMessage(ERROR, "Пользователь уже авторизован!");
                         }
-                        sendMessage("/authok " + nick);
+                        sendMessage(AUTHOK, nick);
                         this.nick = nick;
                         server.subscribe(this);
-                        server.broadcast("Пользователь " + nick + " зашел в чат");
+                        server.broadcast(MESSAGE, "Пользователь " + nick + " зашел в чат");
                         break;
                     } else {
-                        sendMessage("Неверные логин и пароль!");
+                        sendMessage(ERROR, "Неверные логин и пароль!");
                     }
                 }
             } catch (IOException e) {
@@ -62,7 +68,7 @@ public class ClientHandler {
     }
 
     private void closeConnection() {
-        sendMessage("/end");
+        sendMessage(END);
         if (in != null) {
             try {
                 in.close();
@@ -87,7 +93,7 @@ public class ClientHandler {
         }
     }
 
-    public void sendMessage(String message) {
+    private void sendMessage(String message) {
         try {
             out.writeUTF(message);
         } catch (IOException e) {
@@ -95,25 +101,43 @@ public class ClientHandler {
         }
     }
 
+    public void sendMessage(Command command, String... params) {
+        sendMessage(command.collectMessage(params));
+    }
+
 
     private void readMessage() {
         try {
             while (true) {
                 String message = in.readUTF();
-                if ("/end".equals(message)) {
-                    break;
+                Command command = Command.getCommand(message);
+                String[] params = command.parse(message);
+
+                if (Command.isCommand(params[0])){
+                    message = params[0];
+                    command = getCommand(message);
+                    params = command.parse(message);
                 }
-                if (message.startsWith("/w")) {
-                    String[] split = message.split("\\p{Blank}+");
-                    final String receiverNick  = split[1];
-                    server.privateMessage(receiverNick, nick, message);
+                if (command == MESSAGE) {
+                    String clientMessage = params[0];
+                    server.broadcast(MESSAGE, nick + ": " + clientMessage);
                     continue;
                 }
-                server.broadcast(nick + ": " + message);
+                if (command == END) {
+                    break;
+                }
+                if (command == PRIVATE_MESSAGE) {
+                    final String receiverNick = params[0];
+                    final String receiverMessage = params[1];
+                    server.sendPrivateMessage(this, receiverNick, receiverMessage);
+                    continue;
+                }
             }
-        } catch (IOException e) {
+        } catch (
+                IOException e) {
             e.printStackTrace();
         }
+
     }
 
     public String getNick() {
