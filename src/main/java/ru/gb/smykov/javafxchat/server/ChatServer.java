@@ -5,16 +5,16 @@ import ru.gb.smykov.javafxchat.Command;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import static ru.gb.smykov.javafxchat.Command.MESSAGE;
 
 public class ChatServer {
-    private final List<ClientHandler> clients;
+    private final Map<String, ClientHandler> clients;
 
     public ChatServer() {
-        this.clients = new ArrayList<>();
+        this.clients = new HashMap<>();
     }
 
     public void run() {
@@ -33,30 +33,25 @@ public class ChatServer {
     }
 
     public void broadcast(String message) {
-        for (ClientHandler client : clients) {
+        for (ClientHandler client : clients.values()) {
             client.sendMessage(MESSAGE, message);
         }
     }
 
     public void subscribe(ClientHandler client) {
-        clients.add(client);
+        clients.put(client.getNick(), client);
     }
 
     public boolean isNickBusy(String nick) {
-        for (ClientHandler client : clients) {
-            if (nick.equals(client.getNick())) {
-                return true;
-            }
-        }
-        return false;
+        return clients.get(nick) != null;
     }
 
     public void unsubscribe(ClientHandler client) {
-        clients.remove(client);
+        clients.remove(client.getNick());
     }
 
     public void privateMessage(String receiverNick, String nick, String message) {
-        for (ClientHandler client : clients) {
+        for (ClientHandler client : clients.values()) {
             if (receiverNick.equals(client.getNick())) {
                 client.sendMessage(MESSAGE, "private " + nick + ": " + message);
                 break;
