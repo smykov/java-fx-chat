@@ -113,7 +113,7 @@ public class ClientHandler {
                 final Command command = Command.getCommand(message);
                 final String[] params = command.parse(message);
                 final String commandMessage = params[0];
-                if (!Command.isCommand(commandMessage)){
+                if (!Command.isCommand(commandMessage)) {
                     server.broadcast(nick + ": " + commandMessage);
                     continue;
                 }
@@ -125,7 +125,7 @@ public class ClientHandler {
                 if (userCommand == PRIVATE_MESSAGE) {
                     final String receiverNick = userParams[0];
                     final String receiverMessage = userParams[1];
-                    server.privateMessage(receiverNick, nick, receiverMessage);
+                    server.sendPrivateMessage(this, receiverNick, receiverMessage);
                     continue;
                 }
             }

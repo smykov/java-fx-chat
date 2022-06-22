@@ -1,14 +1,12 @@
 package ru.gb.smykov.javafxchat.server;
 
-import ru.gb.smykov.javafxchat.Command;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 
-import static ru.gb.smykov.javafxchat.Command.MESSAGE;
+import static ru.gb.smykov.javafxchat.Command.*;
 
 public class ChatServer {
     private final Map<String, ClientHandler> clients;
@@ -50,12 +48,13 @@ public class ChatServer {
         clients.remove(client.getNick());
     }
 
-    public void privateMessage(String receiverNick, String nick, String message) {
-        for (ClientHandler client : clients.values()) {
-            if (receiverNick.equals(client.getNick())) {
-                client.sendMessage(MESSAGE, "private " + nick + ": " + message);
-                break;
-            }
+    public void sendPrivateMessage(ClientHandler from, String nickTo, String message) {
+        final ClientHandler clientTo = clients.get(nickTo);
+        if (clientTo == null) {
+            from.sendMessage(ERROR, "Пользователь '" + nickTo + "' не авторизован!");
+            return;
         }
+        clientTo.sendMessage(MESSAGE, "private from" + clientTo.getNick() + ": " + message);
+        from.sendMessage(MESSAGE, "private to" + clientTo.getNick() + ": " + message);
     }
 }
