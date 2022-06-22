@@ -38,13 +38,18 @@ public enum Command {
         public String[] parse(String commandText) {
             final String[] split = commandText.split(TOKEN_DELIMITER);
             final String[] nicks = new String[split.length - 1];
-            for (int i = 0; i < split.length; i++) {
-                nicks[i] = split[i + 1];
-            }
+            System.arraycopy(split, 1, nicks, 0, split.length);
             return nicks;
         }
     },
     ERROR("/error") {
+        @Override
+        public String[] parse(String commandText) {
+            final String[] split = commandText.split(TOKEN_DELIMITER, 2);
+            return new String[]{split[1]};
+        }
+    },
+    MESSAGE("/message") {
         @Override
         public String[] parse(String commandText) {
             final String[] split = commandText.split(TOKEN_DELIMITER, 2);
