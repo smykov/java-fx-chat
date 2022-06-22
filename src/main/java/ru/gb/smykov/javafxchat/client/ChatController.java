@@ -14,7 +14,7 @@ import static ru.gb.smykov.javafxchat.Command.*;
 
 public class ChatController {
     @FXML
-    private HBox authBox;
+    protected HBox authBox;
     @FXML
     private ListView<String> clientList;
     @FXML
@@ -22,7 +22,7 @@ public class ChatController {
     @FXML
     private PasswordField passField;
     @FXML
-    private HBox messageBox;
+    protected HBox messageBox;
     @FXML
     private TextArea messageArea;
     @FXML
@@ -83,11 +83,6 @@ public class ChatController {
 
     public void addMessage(String message) {
         messageArea.appendText(message + "\n");
-    }
-
-    public void setAuth(boolean success) {
-        authBox.setVisible(!success);
-        messageBox.setVisible(success);
     }
 
     public void signinBtnClick() {

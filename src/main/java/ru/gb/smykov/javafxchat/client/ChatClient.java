@@ -15,6 +15,16 @@ public class ChatClient {
     private Socket socket;
     private DataInputStream in;
     private DataOutputStream out;
+    private boolean userAuth = false;
+
+    public void setUserAuth(boolean userAuth) {
+        this.userAuth = userAuth;
+        controller.authBox.setVisible(!userAuth);
+        controller.messageBox.setVisible(userAuth);
+    }
+    public boolean isUserAuth() {
+        return userAuth;
+    }
 
     public ChatClient(ChatController controller) {
         this.controller = controller;
@@ -24,7 +34,7 @@ public class ChatClient {
         socket = new Socket("127.0.0.1", 8189);
         in = new DataInputStream(socket.getInputStream());
         out = new DataOutputStream(socket.getOutputStream());
-        new Thread(() -> {
+        Thread threadMain = new Thread(() -> {
             try {
                 waitAuth();
                 readMessages();
@@ -33,7 +43,19 @@ public class ChatClient {
             } finally {
                 closeConnection();
             }
-        }).start();
+        });
+        Thread threadTimerToClose = new Thread(() -> {
+            try {
+                Thread.sleep(120_000);
+                if (!isUserAuth()){
+                    closeConnection();
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+        threadMain.start();
+        threadTimerToClose.start();
     }
 
     private void waitAuth() throws IOException {
@@ -43,7 +65,7 @@ public class ChatClient {
             final String[] params = command.parse(message);
             if (command == AUTHOK) {
                 final String nick = params[0];
-                controller.setAuth(true);
+                setUserAuth(true);
                 controller.addMessage("Успешная авторизация под ником " + nick);
                 break;
             }
@@ -98,6 +120,7 @@ public class ChatClient {
                 e.printStackTrace();
             }
         }
+        System.exit(0);
     }
 
     private void sendMessage(String message) {
