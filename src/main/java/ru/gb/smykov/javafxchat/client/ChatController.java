@@ -10,8 +10,7 @@ import ru.gb.smykov.javafxchat.Command;
 import java.io.IOException;
 import java.util.Optional;
 
-import static ru.gb.smykov.javafxchat.Command.MESSAGE;
-import static ru.gb.smykov.javafxchat.Command.PRIVATE_MESSAGE;
+import static ru.gb.smykov.javafxchat.Command.*;
 
 public class ChatController {
     @FXML
@@ -114,5 +113,9 @@ public class ChatController {
     public void updateClientsList(String[] clients) {
         clientList.getItems().clear();
         clientList.getItems().addAll(clients);
+    }
+
+    public void signOutClick() {
+        client.sendMessage(END);
     }
 }

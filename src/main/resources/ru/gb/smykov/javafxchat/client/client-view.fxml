@@ -37,6 +37,7 @@
                     <Button text="Send" defaultButton="true" onAction="#clickSendButton"/>
                 </HBox>
             </VBox>
+            <Button text="sign out" onMouseClicked="#signOutClick"/>
             <ListView fx:id="clientList" minWidth="200" maxWidth="200" onMouseClicked="#selectClient"/>
         </HBox>
     </VBox>
