@@ -5,7 +5,10 @@ import ru.gb.smykov.javafxchat.Command;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,7 +32,7 @@ public class ChatServer {
                 new ClientHandler(socket, this, authService);
                 System.out.println("Клиент подключен!");
             }
-        } catch (IOException|SQLException e) {
+        } catch (IOException | SQLException e) {
             e.printStackTrace();
         }
     }
@@ -70,5 +73,24 @@ public class ChatServer {
         }
         clientTo.sendMessage(MESSAGE, "private from " + clientTo.getNick() + ": " + message);
         from.sendMessage(MESSAGE, "private to " + clientTo.getNick() + ": " + message);
+    }
+
+    public void changeNickname(ClientHandler currentUser, String newNickname) {
+        try {
+            Connection connection = DriverManager.getConnection("jdbc:sqlite:src/main/resources/ru/gb/smykov/javafxchat/server/database.db");
+            Statement statement = connection.createStatement();
+            String updateQuery = String.format("update users set nickname = '%s' where nickname = '%s'", newNickname, currentUser.getNick());
+            if (statement.executeUpdate(updateQuery) != 0) {
+                currentUser.sendMessage(MESSAGE, "Ник изменен на " + newNickname);
+                currentUser.setNick(newNickname);
+                broadcastClientList();
+            } else {
+                currentUser.sendMessage(MESSAGE, "Ошибка изменения ника");
+            }
+            statement.close();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 }

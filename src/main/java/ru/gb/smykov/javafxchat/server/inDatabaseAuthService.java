@@ -20,7 +20,9 @@ public class inDatabaseAuthService implements AuthService {
         String sql = String.format("select nickname from users where login = '%s' and password = '%s'", login, password);
         ResultSet resultSet = statement.executeQuery(sql);
 
-        return resultSet.getString("nickname");
+        String nick = resultSet.getString("nickname");
+        statement.close();
+        return nick;
     }
 
     private Statement createStatement() throws SQLException {

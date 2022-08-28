@@ -33,6 +33,14 @@ public enum Command {
             return new String[]{split[1], split[2]};
         }
     },
+    CHANGE_NICKNAME("/change_name") {
+        @Override
+        public String[] parse(String commandText) {
+            final String[] split = commandText.split(TOKEN_DELIMITER, 2);
+            return new String[]{split[1]};
+        }
+    },
+
     CLIENTS("/clients") {
         @Override
         public String[] parse(String commandText) {
@@ -42,6 +50,7 @@ public enum Command {
             return nicks;
         }
     },
+
     ERROR("/error") {
         @Override
         public String[] parse(String commandText) {
@@ -49,6 +58,7 @@ public enum Command {
             return new String[]{split[1]};
         }
     },
+
     MESSAGE("/message") {
         @Override
         public String[] parse(String commandText) {
