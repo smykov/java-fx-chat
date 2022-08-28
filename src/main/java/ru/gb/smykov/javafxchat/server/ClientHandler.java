@@ -6,6 +6,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.sql.SQLException;
 
 import static ru.gb.smykov.javafxchat.Command.*;
 
@@ -61,7 +62,7 @@ public class ClientHandler {
                         sendMessage(ERROR, "Неверные логин и пароль!");
                     }
                 }
-            } catch (IOException e) {
+            } catch (IOException | SQLException e) {
                 e.printStackTrace();
             }
         }
@@ -130,7 +131,6 @@ public class ClientHandler {
                     final String receiverNick = params[0];
                     final String receiverMessage = params[1];
                     server.sendPrivateMessage(this, receiverNick, receiverMessage);
-                    continue;
                 }
             }
         } catch (

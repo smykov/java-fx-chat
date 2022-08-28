@@ -5,6 +5,7 @@ import ru.gb.smykov.javafxchat.Command;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -20,7 +21,7 @@ public class ChatServer {
 
     public void run() {
         try (ServerSocket serverSocket = new ServerSocket(8189);
-             AuthService authService = new inMemoryAuthService()
+             AuthService authService = new inDatabaseAuthService()
         ) {
             while (true) {
                 System.out.println("Ожидаю подключения...");
@@ -28,7 +29,7 @@ public class ChatServer {
                 new ClientHandler(socket, this, authService);
                 System.out.println("Клиент подключен!");
             }
-        } catch (IOException e) {
+        } catch (IOException|SQLException e) {
             e.printStackTrace();
         }
     }
