@@ -3,25 +3,31 @@ package ru.gb.smykov.javafxchat.client;
 import javafx.application.Platform;
 import ru.gb.smykov.javafxchat.Command;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
 
 import static ru.gb.smykov.javafxchat.Command.*;
 
 public class ChatClient {
     private final ChatController controller;
     private Socket socket;
+    private Path fileHistory;
+    private OutputStream fout;
     private DataInputStream in;
     private DataOutputStream out;
     private boolean userAuth = false;
+    private String nickName;
 
     public void setUserAuth(boolean userAuth) {
         this.userAuth = userAuth;
         controller.authBox.setVisible(!userAuth);
         controller.messageBox.setVisible(userAuth);
     }
+
     public boolean isUserAuth() {
         return userAuth;
     }
@@ -34,9 +40,11 @@ public class ChatClient {
         socket = new Socket("127.0.0.1", 8189);
         in = new DataInputStream(socket.getInputStream());
         out = new DataOutputStream(socket.getOutputStream());
+
         Thread threadMain = new Thread(() -> {
             try {
                 waitAuth();
+                fout = Files.newOutputStream(fileHistory);
                 readMessages();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -47,7 +55,7 @@ public class ChatClient {
         Thread threadTimerToClose = new Thread(() -> {
             try {
                 Thread.sleep(120_000);
-                if (!isUserAuth()){
+                if (!isUserAuth()) {
                     closeConnection();
                 }
             } catch (InterruptedException e) {
@@ -64,9 +72,12 @@ public class ChatClient {
             final Command command = getCommand(message);
             final String[] params = command.parse(message);
             if (command == AUTHOK) {
-                final String nick = params[0];
+                nickName = params[0];
                 setUserAuth(true);
-                controller.addMessage("Успешная авторизация под ником " + nick);
+                initFileHistory();
+                String chatHistory = getChatHistory();
+                controller.addMessage(chatHistory);
+                controller.addMessage("Успешная авторизация под ником " + nickName);
                 break;
             }
             if (command == ERROR) {
@@ -74,6 +85,30 @@ public class ChatClient {
                 continue;
             }
         }
+    }
+
+    private String getChatHistory() {
+        String[] textArr;
+        try {
+            Path parent = fileHistory.getParent();
+            if (!Files.exists(parent)) {
+                Files.createDirectories(parent);
+            }
+            if (!Files.exists(fileHistory)) {
+                Files.createFile(fileHistory);
+            }
+            textArr = Files.readString(fileHistory).split("\n");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        int indexStart = Math.max(textArr.length - 100, 0);
+        int indexEnd = textArr.length;
+        return String.join("\n", Arrays.copyOfRange(textArr, indexStart, indexEnd));
+    }
+
+    private void initFileHistory() {
+        fileHistory = Path.of("history", "history_" + this.nickName + ".txt");
     }
 
     private void readMessages() throws IOException {
@@ -98,7 +133,15 @@ public class ChatClient {
         }
     }
 
-    private void closeConnection() {
+    public void closeConnection() {
+        if (fout != null) {
+            try {
+                fout.write(controller.getMessageAreaText().getBytes(StandardCharsets.UTF_8));
+                fout.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
         if (in != null) {
             try {
                 in.close();

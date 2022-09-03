@@ -1,6 +1,5 @@
 package ru.gb.smykov.javafxchat.client;
 
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
@@ -31,7 +30,12 @@ public class ChatController {
     private String nickToPrivateMessage;
 
     public void clickExit() {
+        client.closeConnection();
         System.exit(0);
+    }
+
+    public String getMessageAreaText() {
+        return messageArea.getText();
     }
 
     public ChatController() {
