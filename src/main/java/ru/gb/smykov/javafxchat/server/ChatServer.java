@@ -56,7 +56,6 @@ public class ChatServer {
         broadcast(CLIENTS, nicks);
     }
 
-
     public boolean isNickBusy(String nick) {
         return clients.get(nick) != null;
     }
