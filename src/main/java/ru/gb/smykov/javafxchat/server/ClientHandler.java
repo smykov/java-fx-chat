@@ -131,10 +131,12 @@ public class ClientHandler {
                     final String receiverNick = params[0];
                     final String receiverMessage = params[1];
                     server.sendPrivateMessage(this, receiverNick, receiverMessage);
+                    continue;
                 }
                 if (command == CHANGE_NICKNAME) {
                     String newNickname = params[0];
                     server.changeNickname(this, newNickname);
+                    continue;
                 }
             }
         } catch (
